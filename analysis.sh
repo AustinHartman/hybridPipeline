@@ -2,19 +2,25 @@ NANOPORE_PATH=''
 ILLUMINA_R1_PATH=''
 ILLUMINA_R2_PATH=''
 ILLUMINA_SINGLEEND_PATH=''
+
 USE_PILON="false"
 USE_RACON="false"
 SINGLE_END="false" # will assume paired end illumina data unless -s flag used
 GENOME_SIZE="5m"
+
 FLYE_OUTDIR="${NANOPORE_PATH: 0: 6}_flye_output"
 MINIMAP_OUTPUT="${NANOPORE_PATH: 0: 6}_nanopore_alignment.paf"
-RACON_OUTPUT"${NANOPORE_PATH: 0: 6}_racon_contigs.fasta"
+RACON_OUTPUT="${NANOPORE_PATH: 0: 6}_racon_contigs.fasta"
+BWA_OUTPUT="${NANOPORE_PATH: 0: 6}_illumina_alignment.bam"
+
 
 # -n : nanopore reads path
-# -1 : illumina read 1 path or single end path is single end data
+# -1 : illumina read 1 path
 # -2 : illumina read 2 path
+# -s : illumina single end path
 # -r : polish using racon
-# -p polish using pilon
+# -p : polish using pilon
+# -g : genome size
 
 
 while getopts "hrpn:1:2:s:g:" opt; do
@@ -62,3 +68,21 @@ minimap2 -x map-ont $FLYE_OUTDIR/assembly.fasta $NANOPORE_PATH > $MINIMAP_OUTPUT
 echo "Polish using racon"
 racon $NANOPORE_PATH $MINIMAP_OUTPUT $FLYE_OUTDIR/assembly.fasta > $RACON_OUTPUT
 
+echo "Index racon contigs"
+bwa index $RACON_OUTPUT
+
+echo "Align illumina reads"
+if [ "$SINGLE_END" = "false" ]
+then
+  bwa mem $RACON_OUTPUT $ILLUMINA_R1_PATH $ILLUMINA_R2_PATH | samtools view -S -b -u - | samtools sort - -o $BWA_OUTPUT
+fi
+
+if [ "$SINGLE_END" = "true" ]
+then
+  bwa mem $RACON_OUTPUT $ILLUMINA_SINGLEEND_PATH | samtools view -S -b -u - | samtools sort - -o $BWA_OUTPUT
+fi
+
+samtools index $BWA_OUTPUT
+
+echo "Running pilon"
+pilon --genome $RACON_OUTPUT --bam $BWA_OUTPUT --outdir pilon_output --output pilon.contigs
