@@ -64,26 +64,26 @@ echo "Assembling nanopore reads using flye long read assembler"
 # flye --meta --plasmids --nano-raw $NANOPORE_PATH --genome-size $GENOME_SIZE --out-dir $FLYE_OUTDIR
 
 echo "Run minimap to align nanopore reads to draft assembly"
-minimap2 -x map-ont $FLYE_OUTDIR/assembly.fasta $NANOPORE_PATH > $MINIMAP_OUTPUT
+#minimap2 -x map-ont $FLYE_OUTDIR/assembly.fasta $NANOPORE_PATH > $MINIMAP_OUTPUT
 
 echo "Polish using racon"
-racon $NANOPORE_PATH $MINIMAP_OUTPUT $FLYE_OUTDIR/assembly.fasta > $RACON_OUTPUT
+#racon $NANOPORE_PATH $MINIMAP_OUTPUT $FLYE_OUTDIR/assembly.fasta > $RACON_OUTPUT
 
 echo "Index racon contigs"
-bwa index $RACON_OUTPUT
+#bwa index $RACON_OUTPUT
 
 echo "Align illumina reads"
-if [ "$SINGLE_END" = "false" ]
-then
-  bwa mem $RACON_OUTPUT $ILLUMINA_R1_PATH $ILLUMINA_R2_PATH | samtools view -S -b -u - | samtools sort - -o $BWA_OUTPUT
-fi
+#if [ "$SINGLE_END" = "false" ]
+#then
+ # bwa mem $RACON_OUTPUT $ILLUMINA_R1_PATH $ILLUMINA_R2_PATH | samtools view -S -b -u - | samtools sort - -o $BWA_OUTPUT
+#fi
 
-if [ "$SINGLE_END" = "true" ]
-then
-  bwa mem $RACON_OUTPUT $ILLUMINA_SINGLEEND_PATH | samtools view -S -b -u - | samtools sort - -o $BWA_OUTPUT
-fi
+#if [ "$SINGLE_END" = "true" ]
+#then
+ # bwa mem $RACON_OUTPUT $ILLUMINA_SINGLEEND_PATH | samtools view -S -b -u - | samtools sort - -o $BWA_OUTPUT
+#fi
 
-samtools index $BWA_OUTPUT
+#samtools index $BWA_OUTPUT
 
 echo "Running pilon"
-pilon --genome $RACON_OUTPUT --bam $BWA_OUTPUT --outdir pilon_output --output pilon.contigs
+pilon --genome $RACON_OUTPUT --bam $BWA_OUTPUT --threads 4 -Xmx16G --outdir pilon_output --output pilon.contigs
