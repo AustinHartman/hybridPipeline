@@ -8,11 +8,6 @@ USE_RACON="false"
 SINGLE_END="false" # will assume paired end illumina data unless -s flag used
 GENOME_SIZE="5m"
 
-FLYE_OUTDIR="${NANOPORE_PATH: 0: 6}_flye_output"
-MINIMAP_OUTPUT="${NANOPORE_PATH: 0: 6}_nanopore_alignment.paf"
-RACON_OUTPUT="${NANOPORE_PATH: 0: 6}_racon_contigs.fasta"
-BWA_OUTPUT="${NANOPORE_PATH: 0: 6}_illumina_alignment.bam"
-
 
 # -n : nanopore reads path
 # -1 : illumina read 1 path
@@ -23,7 +18,7 @@ BWA_OUTPUT="${NANOPORE_PATH: 0: 6}_illumina_alignment.bam"
 # -g : genome size
 
 
-while getopts "hrpn:1:2:s:g:" opt; do
+while getopts "hrpn:1:2:s:g:o:" opt; do
   case ${opt} in
     h )
       echo "Help:"
@@ -36,6 +31,7 @@ while getopts "hrpn:1:2:s:g:" opt; do
       echo -e "\t\t-r : polish flye contigs using racon + nanopore reads"
       echo -e "\t\t-p : polish racon / flye contigs using pilon + illumina reads"
       echo -e "\t\t-g : genome size (default: 5m)"
+      echo -e "\t\t-o : output directory prefix"
       exit 1
       ;;
     n ) NANOPORE_PATH=$OPTARG
@@ -48,6 +44,8 @@ while getopts "hrpn:1:2:s:g:" opt; do
       ;;
     g ) GENOME_SIZE=$OPTARG
       ;;
+    o ) OUTPUT_PREFIX=$OPTARG
+      ;;
     r ) USE_RACON="true"
       ;;
     p ) USE_PILON="true"
@@ -57,6 +55,13 @@ while getopts "hrpn:1:2:s:g:" opt; do
   esac
 done
 
+OUTDIR="${OUTPUT_PREFIX}_hybrid_output"
+mkdir $OUTDIR
+FLYE_OUTDIR="${OUTDIR}/${OUTPUT_PREFIX}_flye_output"
+MINIMAP_OUTPUT="${OUTDIR}/${OUTPUT_PREFIX}_nanopore_alignment.paf"
+RACON_OUTPUT="${OUTDIR}/${OUTPUT_PREFIX}_racon_contigs.fasta"
+BWA_OUTPUT="${OUTDIR}/${OUTPUT_PREFIX}_illumina_alignment.bam"
+PILON_OUTPUT="${OUTDIR}/${OUTPUT_PREFIX}_pilon_output"
 
 echo "Beginning pipeline"
 echo "Assembling nanopore reads using flye long read assembler"
@@ -85,4 +90,5 @@ fi
 samtools index $BWA_OUTPUT
 
 echo "Running pilon"
-pilon --genome $RACON_OUTPUT --bam $BWA_OUTPUT --outdir pilon_output --output pilon.contigs
+java -Xmx16G -jar /media/beastadmin/SeagateExpansion/programs/pilon-1.22.jar --genome $RACON_OUTPUT --bam $BWA_OUTPUT --outdir $PILON_OUTPUT --output pilon.contigs
+
