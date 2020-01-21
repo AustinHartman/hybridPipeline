@@ -63,20 +63,20 @@ RACON_OUTPUT="${OUTDIR}/${OUTPUT_PREFIX}_racon_contigs.fasta"
 BWA_OUTPUT="${OUTDIR}/${OUTPUT_PREFIX}_illumina_alignment.bam"
 PILON_OUTPUT="${OUTDIR}/${OUTPUT_PREFIX}_pilon_output"
 
-echo "Beginning pipeline"
-echo "Assembling nanopore reads using flye long read assembler"
+echo -e "\n\n### Beginning pipeline ###\n\n"
+echo -e "\n\n### Assembling nanopore reads using flye long read assembler ###\n\n"
 flye --meta --plasmids --nano-raw $NANOPORE_PATH --genome-size $GENOME_SIZE --out-dir $FLYE_OUTDIR
 
-echo "Run minimap to align nanopore reads to draft assembly"
+echo -e "\n\n### Run minimap to align nanopore reads to draft assembly ###\n\n"
 minimap2 -x map-ont $FLYE_OUTDIR/assembly.fasta $NANOPORE_PATH > $MINIMAP_OUTPUT
 
-echo "Polish using racon"
+echo -e "\n\n### Polish using racon ###\n\n"
 racon $NANOPORE_PATH $MINIMAP_OUTPUT $FLYE_OUTDIR/assembly.fasta > $RACON_OUTPUT
 
-echo "Index racon contigs"
+echo -e "\n\n### Index racon contigs ###\n\n"
 bwa index $RACON_OUTPUT
 
-echo "Align illumina reads"
+echo -e "\n\n### Align illumina reads: data is single-end? ${SINGLE_END}  ###\n\n"
 if [ "$SINGLE_END" = "false" ]
 then
   bwa mem $RACON_OUTPUT $ILLUMINA_R1_PATH $ILLUMINA_R2_PATH | samtools view -S -b -u - | samtools sort - -o $BWA_OUTPUT
@@ -89,6 +89,6 @@ fi
 
 samtools index $BWA_OUTPUT
 
-echo "Running pilon"
+echo -e "\n\n### Running pilon ###\n\n"
 java -Xmx16G -jar /media/beastadmin/SeagateExpansion/programs/pilon-1.22.jar --genome $RACON_OUTPUT --bam $BWA_OUTPUT --outdir $PILON_OUTPUT --output pilon.contigs
 
