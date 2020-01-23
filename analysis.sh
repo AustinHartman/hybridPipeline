@@ -56,7 +56,6 @@ while getopts "hrpn:1:2:s:g:o:" opt; do
 done
 
 OUTDIR="${OUTPUT_PREFIX}_hybrid_output"
-mkdir $OUTDIR
 FLYE_OUTDIR="${OUTDIR}/${OUTPUT_PREFIX}_flye_output"
 MINIMAP_OUTPUT="${OUTDIR}/${OUTPUT_PREFIX}_nanopore_alignment.paf"
 RACON_OUTPUT="${OUTDIR}/${OUTPUT_PREFIX}_racon_contigs.fasta"
@@ -65,7 +64,7 @@ PILON_OUTPUT="${OUTDIR}/${OUTPUT_PREFIX}_pilon_output"
 
 echo -e "\n\n### Beginning pipeline ###\n\n"
 echo -e "\n\n### Assembling nanopore reads using flye long read assembler ###\n\n"
-flye --meta --plasmids --nano-raw $NANOPORE_PATH --genome-size $GENOME_SIZE --out-dir $FLYE_OUTDIR
+#flye --meta --plasmids --nano-raw $NANOPORE_PATH --genome-size $GENOME_SIZE --out-dir $FLYE_OUTDIR
 
 echo -e "\n\n### Run minimap to align nanopore reads to draft assembly ###\n\n"
 minimap2 -x map-ont $FLYE_OUTDIR/assembly.fasta $NANOPORE_PATH > $MINIMAP_OUTPUT
