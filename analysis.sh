@@ -95,3 +95,8 @@ samtools index $BWA_OUTPUT
 echo -e "\n\n### Running pilon ###\n\n"
 java -Xmx16G -jar /media/beastadmin/SeagateExpansion/programs/pilon-1.22.jar --genome $RACON_OUTPUT --bam $BWA_OUTPUT --outdir $PILON_OUTPUT --output pilon.contigs
 
+
+echo "Calculating read depth"
+./getReadDepth.sh ${PILON_OUTPUT}/pilon.contigs $NANOPORE_PATH
+$ILLUMINA_R1_PATH $ILLUMINA_R2_PATH ${OUTPUT_PREFIX}
+
