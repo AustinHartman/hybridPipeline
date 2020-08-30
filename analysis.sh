@@ -8,11 +8,6 @@ USE_RACON="false"
 SINGLE_END="false" # will assume paired end illumina data unless -s flag used
 GENOME_SIZE="5m"
 
-FLYE_OUTDIR="${NANOPORE_PATH: 0: 6}_flye_output"
-MINIMAP_OUTPUT="${NANOPORE_PATH: 0: 6}_nanopore_alignment.paf"
-RACON_OUTPUT="${NANOPORE_PATH: 0: 6}_racon_contigs.fasta"
-BWA_OUTPUT="${NANOPORE_PATH: 0: 6}_illumina_alignment.bam"
-
 
 # -n : nanopore reads path
 # -1 : illumina read 1 path
@@ -57,9 +52,15 @@ while getopts "hrpn:1:2:s:g:" opt; do
   esac
 done
 
+FLYE_OUTDIR="${NANOPORE_PATH: 0: 6}_flye_output"
+MINIMAP_OUTPUT="${NANOPORE_PATH: 0: 6}_nanopore_alignment.paf"
+RACON_OUTPUT="${NANOPORE_PATH: 0: 6}_racon_contigs.fasta"
+BWA_OUTPUT="${NANOPORE_PATH: 0: 6}_illumina_alignment.bam"
 
 echo "Beginning pipeline"
 echo "Assembling nanopore reads using flye long read assembler"
+mkdir $FLYE_OUTDIR
+
 flye --meta --plasmids --nano-raw $NANOPORE_PATH --genome-size $GENOME_SIZE --out-dir $FLYE_OUTDIR
 
 echo "Run minimap to align nanopore reads to draft assembly"
