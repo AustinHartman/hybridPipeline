@@ -18,7 +18,7 @@ GENOME_SIZE="5m"
 # -g : genome size
 
 
-while getopts "hrpn:1:2:s:g:" opt; do
+while getopts "hrpn:1:2:s:g:o:" opt; do
   case ${opt} in
     h )
       echo "Help:"
@@ -31,6 +31,7 @@ while getopts "hrpn:1:2:s:g:" opt; do
       echo -e "\t\t-r : polish flye contigs using racon + nanopore reads"
       echo -e "\t\t-p : polish racon / flye contigs using pilon + illumina reads"
       echo -e "\t\t-g : genome size (default: 5m)"
+      echo -e "\t\t-o : output directory prefix"
       exit 1
       ;;
     n ) NANOPORE_PATH=$OPTARG
@@ -43,6 +44,8 @@ while getopts "hrpn:1:2:s:g:" opt; do
       ;;
     g ) GENOME_SIZE=$OPTARG
       ;;
+    o ) OUTPUT_PREFIX=$OPTARG
+      ;;
     r ) USE_RACON="true"
       ;;
     p ) USE_PILON="true"
@@ -52,6 +55,7 @@ while getopts "hrpn:1:2:s:g:" opt; do
   esac
 done
 
+<<<<<<< HEAD
 FLYE_OUTDIR="${NANOPORE_PATH: 0: 6}_flye_output"
 MINIMAP_OUTPUT="${NANOPORE_PATH: 0: 6}_nanopore_alignment.paf"
 RACON_OUTPUT="${NANOPORE_PATH: 0: 6}_racon_contigs.fasta"
@@ -62,17 +66,29 @@ echo "Assembling nanopore reads using flye long read assembler"
 mkdir $FLYE_OUTDIR
 
 flye --meta --plasmids --nano-raw $NANOPORE_PATH --genome-size $GENOME_SIZE --out-dir $FLYE_OUTDIR
+=======
+OUTDIR="${OUTPUT_PREFIX}_hybrid_output"
+FLYE_OUTDIR="${OUTDIR}/${OUTPUT_PREFIX}_flye_output"
+MINIMAP_OUTPUT="${OUTDIR}/${OUTPUT_PREFIX}_nanopore_alignment.paf"
+RACON_OUTPUT="${OUTDIR}/${OUTPUT_PREFIX}_racon_contigs.fasta"
+BWA_OUTPUT="${OUTDIR}/${OUTPUT_PREFIX}_illumina_alignment.bam"
+PILON_OUTPUT="${OUTDIR}/${OUTPUT_PREFIX}_pilon_output"
 
-echo "Run minimap to align nanopore reads to draft assembly"
+echo -e "\n\n### Beginning pipeline ###\n\n"
+echo -e "\n\n### Assembling nanopore reads using flye long read assembler ###\n\n"
+#flye --meta --plasmids --nano-raw $NANOPORE_PATH --genome-size $GENOME_SIZE --out-dir $FLYE_OUTDIR
+>>>>>>> 0eac825ef0a12b8483426ac23d37dadca409d432
+
+echo -e "\n\n### Run minimap to align nanopore reads to draft assembly ###\n\n"
 minimap2 -x map-ont $FLYE_OUTDIR/assembly.fasta $NANOPORE_PATH > $MINIMAP_OUTPUT
 
-echo "Polish using racon"
+echo -e "\n\n### Polish using racon ###\n\n"
 racon $NANOPORE_PATH $MINIMAP_OUTPUT $FLYE_OUTDIR/assembly.fasta > $RACON_OUTPUT
 
-echo "Index racon contigs"
+echo -e "\n\n### Index racon contigs ###\n\n"
 bwa index $RACON_OUTPUT
 
-echo "Align illumina reads"
+echo -e "\n\n### Align illumina reads: data is single-end? ${SINGLE_END}  ###\n\n"
 if [ "$SINGLE_END" = "false" ]
 then
   bwa mem $RACON_OUTPUT $ILLUMINA_R1_PATH $ILLUMINA_R2_PATH | samtools view -S -b -u - | samtools sort - -o $BWA_OUTPUT
@@ -85,5 +101,6 @@ fi
 
 samtools index $BWA_OUTPUT
 
-echo "Running pilon"
-pilon --genome $RACON_OUTPUT --bam $BWA_OUTPUT --outdir pilon_output --output pilon.contigs
+echo -e "\n\n### Running pilon ###\n\n"
+java -Xmx16G -jar /media/beastadmin/SeagateExpansion/programs/pilon-1.22.jar --genome $RACON_OUTPUT --bam $BWA_OUTPUT --outdir $PILON_OUTPUT --output pilon.contigs
+
